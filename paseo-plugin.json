@@ -1,0 +1,16 @@
+{
+  "id": "beautiful-chat-plus",
+  "name": "Beautiful Chat Plus",
+  "description": "Styled chat, compact activity groups and on-demand image previews. Community fork; desktop grouping is experimental.",
+  "requirements": {
+    "paseo": ">=0.11.1 <0.12.0"
+  },
+  "build": [
+    [
+      "npm",
+      "ci",
+      "--omit=dev",
+      "--ignore-scripts"
+    ]
+  ]
+}

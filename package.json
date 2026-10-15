@@ -1,0 +1,48 @@
+{
+  "name": "paseo-beautiful-chat-plus",
+  "version": "0.2.0",
+  "private": true,
+  "description": "A community fork of Beautiful Chat with compact activity groups, lazy image previews and rendering improvements.",
+  "license": "MIT",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --maxWorkers=2"
+  },
+  "dependencies": {
+    "@shikijs/core": "^4.0.2",
+    "@shikijs/engine-javascript": "^4.0.2",
+    "@shikijs/langs": "^4.0.2",
+    "@shikijs/themes": "^4.0.2"
+  },
+  "devDependencies": {
+    "@getpaseo/plugin": "0.8.0",
+    "@tanstack/react-query": "^5.90.11",
+    "@types/node": "^22.15.3",
+    "@types/react": "~19.2.0",
+    "@types/react-test-renderer": "^19.1.0",
+    "jsdom": "^26.1.0",
+    "react": "19.1.0",
+    "react-dom": "^19.1.0",
+    "react-native": "0.81.5",
+    "react-native-web": "^0.21.2",
+    "react-test-renderer": "^19.1.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4",
+    "zod": "^4.4.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/leansz-coder/paseo-beautiful-chat.git"
+  },
+  "files": [
+    "paseo-plugin.json",
+    "OVERVIEW.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "licenses/",
+    "index.client.tsx",
+    "index.server.ts",
+    "client/",
+    "shared/"
+  ]
+}

@@ -1,0 +1,33 @@
+import React from "react";
+import { act, create, type ReactTestRenderer } from "react-test-renderer";
+import { expect, it, vi } from "vitest";
+const { copy, highlight } = vi.hoisted(() => ({ copy: vi.fn(async (_text: string) => {}), highlight: vi.fn(() => ({ lines: null, diffLines: null })) }));
+vi.mock("react-native", () => ({ View: "View", Text: "Text", Pressable: "Pressable", StyleSheet: { create: (styles: object) => styles }, Platform: { OS: "web" } }));
+vi.mock("@getpaseo/plugin/client/react-native", () => ({ copyText: copy }));
+vi.mock("../client/components/glyph", () => ({ Glyph: () => null }));
+vi.mock("../client/components/file-type-logo", () => ({ FileTypeLogo: () => null, detectFileType: () => "generic" }));
+vi.mock("../client/components/motion", () => ({ Pop: ({ children }: any) => children }));
+vi.mock("../client/components/selection-actions", () => ({ selectionCodeSurface: {}, selectionSurface: {} }));
+vi.mock("../client/highlight", () => ({ useHighlightedLines: highlight }));
+import { SyntaxHighlightBlock } from "../client/components/syntax-highlight";
+import { buildThemeTokens, type PluginSurfaceColors } from "../client/components/theme-tokens";
+const tokens = buildThemeTokens({ surface0: "#111111", foreground: "#eeeeee", accent: "#eeeeee", foregroundMuted: "#999999", statusDanger: "#ee5555" } as PluginSurfaceColors);
+Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
+it("renders/highlights only preview lines, expands on demand and copies the exact full original", async () => {
+  const code = Array.from({ length: 3000 }, (_, i) => `const item${i} = ${i};`).join("\n") + "\n\n";
+  let renderer!: ReactTestRenderer;
+  await act(async () => { renderer = create(<SyntaxHighlightBlock code={code} tokens={tokens} language="js" showLineNumbers />); });
+  const shown = () => (highlight.mock.calls.at(-1) as any)[0].code.split("\n").length;
+  expect(shown()).toBe(80);
+  expect(renderer.toJSON()).toBeTruthy();
+  await act(async () => { renderer.root.findByProps({ accessibilityLabel: "再显示 200 行" }).props.onPress(); });
+  expect(shown()).toBe(280);
+  // The copy control is the header's only Pressable without an accessibility label.
+  await act(async () => { renderer.root.findAllByType("Pressable" as any).find(node => !node.props.accessibilityLabel)!.props.onPress(); });
+  expect(copy).toHaveBeenLastCalledWith(code);
+  await act(async () => { renderer.root.findByProps({ accessibilityLabel: "展开全部代码" }).props.onPress(); });
+  expect(shown()).toBe(3000);
+  await act(async () => { renderer.root.findByProps({ accessibilityLabel: "收起代码" }).props.onPress(); });
+  expect(shown()).toBe(80);
+  await act(async () => { renderer.unmount(); });
+});

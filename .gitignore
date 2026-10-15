@@ -1,0 +1,8 @@
+node_modules/
+.local-verification/
+dist/
+*.tsbuildinfo
+*.tgz
+.env
+.env.*
+.DS_Store

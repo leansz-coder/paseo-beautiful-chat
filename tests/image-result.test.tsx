@@ -1,0 +1,25 @@
+import React from "react";
+import { act, create, type ReactTestRenderer } from "react-test-renderer";
+import { expect, it, vi } from "vitest";
+vi.mock("react-native", () => ({ View: "View", Text: "Text", Pressable: "Pressable" }));
+vi.mock("../client/grouped-renderers", () => ({ ActivityRow: ({children}: any) => children }));
+vi.mock("../client/components/glyph", () => ({ Glyph: () => null }));
+vi.mock("../client/components/image-preview", () => ({ ImagePreview: "ImagePreview" }));
+vi.mock("../client/components/zoomable-image", () => ({ ZoomableImage: "ZoomableImage" }));
+const { load } = vi.hoisted(() => ({ load: vi.fn(() => ({ dataUri: "data:image/png;base64,example" })) }));
+vi.mock("../client/image-file", () => ({ useImageFile: load }));
+import { ImageResultCard } from "../client/image-result";
+import { buildThemeTokens } from "../client/components/theme-tokens";
+const tokens = buildThemeTokens({ surface0: "#111", foreground: "#eee", foregroundMuted: "#999", accent: "#eee", accentForeground: "#111", statusDanger: "#e55" } as any);
+Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
+it("does not read screenshot bytes until explicitly expanded; collapse removes the preview", async () => {
+  let renderer!: ReactTestRenderer;
+  await act(async () => { renderer = create(<ImageResultCard images={[{ uri: "file:///tmp/a.png", path: "/tmp/a.png", label: "截图" }]} tokens={tokens} />); });
+  expect(load).not.toHaveBeenCalled();
+  await act(async () => renderer.root.findByProps({ accessibilityLabel: "查看截图 1 张" }).props.onPress());
+  expect(load).toHaveBeenCalledWith("/tmp/a.png", null);
+  expect(renderer.root.findAllByType("ImagePreview" as any)).toHaveLength(1);
+  await act(async () => renderer.root.findByProps({ accessibilityLabel: "收起截图 1 张" }).props.onPress());
+  expect(renderer.root.findAllByType("ImagePreview" as any)).toHaveLength(0);
+  await act(async () => renderer.unmount());
+});
