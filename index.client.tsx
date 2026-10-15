@@ -12,7 +12,7 @@ import { installActivityGroups } from "./client/activity-groups";
 import { GroupedToolCallRenderer, GroupedReasoningRenderer } from "./client/grouped-renderers";
 import { ImageResultRenderer } from "./client/image-result";
 import { needsNativeImageRendering, imageOnlyResults } from "./client/native-media";
-import { extractPromptImages } from "./client/prompt-images";
+import { installNativePromptStyle } from "./client/web";
 import { getEnhancerPreferences } from "./client/preferences";
 import {
   LiveToolCallRenderer,
@@ -41,6 +41,7 @@ export default function contribute(client: PluginClientContext) {
   const removeChatFind = installChatFind();
   const removeActivityGroups = installActivityGroups();
   const removeWorkingRing = installWorkingRing();
+  const removeNativePromptStyle = installNativePromptStyle();
 
   // Configuration lives in the host Settings area. The plugin has no showcase
   // surface, panels, or Command Center item.
@@ -158,31 +159,11 @@ export default function contribute(client: PluginClientContext) {
     query: { itemType: "user_message" },
     transform({ item }) {
       if (item.type !== "user_message") return undefined;
-      // The host strips images while mapping the stream item, so an enhanced
-      // bubble would silently swallow a pasted screenshot. The preference lets
-      // the reader trade the bubble for the host's image previews.
-      if (!getEnhancerPreferences().enhancedUserBubble) return undefined;
-      const images = extractPromptImages(item);
-      // Replacing the item drops whatever this renderer does not carry, so a
-      // message with an attachment it cannot show is left to the host.
-      if (images.hasUnrenderable) return undefined;
-      // `messageId` rides along so the renderer can carry the host's own
-      // `data-history-row-id`, which is the id the chat outline scrolls to.
-      // Replacing the item leaves the outline nothing to find otherwise.
-      return {
-        items: [
-          {
-            type: "plugin" as const,
-            kind: "omp-user-message",
-            version: 1,
-            data: toJsonValue({
-              text: item.text,
-              ...(images.uris.length > 0 ? { images: images.uris } : {}),
-              ...(item.messageId ? { messageId: item.messageId } : {}),
-            }),
-          },
-        ],
-      };
+      // Paseo 0.11.x projects only text/message IDs into plugin transformers.
+      // Attachment absence is unknowable here: replacing even a plain-looking
+      // source silently drops files and images. Preserve the host source, and
+      // apply visual polish without taking ownership of its attachment UI.
+      return undefined;
     },
   });
 
@@ -282,6 +263,7 @@ export default function contribute(client: PluginClientContext) {
     removeChatFind();
     removeActivityGroups();
     removeWorkingRing();
+    removeNativePromptStyle();
     removeToolTransformer();
     removeToolRenderer();
     removeReasoningTransformer();

@@ -1,4 +1,7 @@
-import React, { useCallback, useEffect, useMemo } from "react";
+import {promptAttachmentsRpc} from "../shared/prompt-attachments";
+import {imageRpc} from "../shared/image-rpc";
+import {attachRecoveredPrompts} from "./web";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { View } from "react-native";
 import { useAgent, usePaseo, useRpc } from "@getpaseo/plugin/client";
 import { useRevealedText } from "@getpaseo/plugin/client/react-native";
@@ -754,6 +757,9 @@ export function LiveAssistantRenderer({
   theme,
   timestamp,
 }: PluginTimelineItemProps<LiveAssistantPayload>) {
+  const promptAnchor=useRef<View>(null);
+  const readPrompts=useRpc(promptAttachmentsRpc),readImage=useRpc(imageRpc);
+  useEffect(()=>attachRecoveredPrompts(promptAnchor.current,agentId,()=>readPrompts({agentId}),path=>readImage({cwd:"/",path})),[agentId,readPrompts,readImage]);
   const preferences = useEnhancerPreferences();
   const tokens = useMemo(
     () => buildThemeTokens(theme.colors, preferences),
@@ -774,7 +780,7 @@ export function LiveAssistantRenderer({
   const envelope = useMemo(() => parseSystemEnvelope(item.data.text), [item.data.text]);
 
   return (
-    <View {...hostFontEscape}>
+    <View ref={promptAnchor} {...hostFontEscape}>
       {envelope ? (
         <SystemCard envelope={envelope} tokens={tokens} />
       ) : (

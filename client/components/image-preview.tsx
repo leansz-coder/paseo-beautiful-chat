@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { ZoomableImage } from "./zoomable-image";
 import { Glyph } from "./glyph";
@@ -6,6 +6,7 @@ import { radius } from "./theme-tokens";
 import type { ExtendedThemeTokens } from "./theme-tokens";
 import { unselectable } from "./selection";
 import type { ImageFile } from "../image-file";
+import { usePresentationState } from "../presentation-state";
 
 interface ImagePreviewProps {
   /** The path as the tool reported it, selector and all. */
@@ -39,7 +40,7 @@ function formatBytes(bytes: number): string {
  * loads but reports no size still has to occupy an honest amount of room.
  */
 export function ImagePreview({ path, file, tokens, onReveal }: ImagePreviewProps) {
-  const [shown, setShown] = useState(true);
+  const [shown, setShown] = usePresentationState(`image-visible:${path}`, true);
 
   const styles = useMemo(
     () =>
@@ -52,6 +53,7 @@ export function ImagePreview({ path, file, tokens, onReveal }: ImagePreviewProps
           overflow: "hidden",
         },
         header: {
+          minHeight: 32,
           flexDirection: "row",
           alignItems: "center",
           gap: 8,
@@ -106,6 +108,7 @@ export function ImagePreview({ path, file, tokens, onReveal }: ImagePreviewProps
         // PNG needs something behind it, and a repeating background is not a
         // React Native style.
         canvas: {
+          height: MAX_HEIGHT + 20,
           padding: 10,
           alignItems: "center",
           justifyContent: "center",
@@ -181,9 +184,9 @@ export function ImagePreview({ path, file, tokens, onReveal }: ImagePreviewProps
       </View>
 
       {file === null ? (
-        <Text style={styles.message}>Reading the file…</Text>
+        shown ? <View style={styles.canvas}><Text style={styles.message}>Reading the file…</Text></View> : null
       ) : file.dataUri === null ? (
-        <Text style={styles.message}>{file.error ?? "The image could not be read."}</Text>
+        shown ? <View style={styles.canvas}><Text style={styles.message}>{file.error ?? "The image could not be read."}</Text></View> : null
       ) : shown ? (
         <View style={styles.canvas}>
           <ZoomableImage uri={file.dataUri} label={path} style={frame} tokens={tokens} width={file.width} height={file.height} />

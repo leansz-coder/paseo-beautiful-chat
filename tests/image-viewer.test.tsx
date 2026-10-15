@@ -24,6 +24,7 @@ it("opens only on click, zooms, resets on dismissal and follows the current imag
   let preview = renderer.root.findByProps({ accessibilityLabel: "截图（放大预览）" });
   expect(preview.props.source.uri).toBe("data:image/png;base64,first");
   const fitWidth = preview.props.style.width;
+  expect(fitWidth).toBeGreaterThan(1000);
   await act(async () => { renderer.root.findByProps({ accessibilityLabel: "放大图片" }).props.onPress(); });
   expect(renderer.root.findByProps({ accessibilityLabel: "截图（放大预览）" }).props.style.width).toBe(fitWidth * 2);
   await act(async () => { renderer.root.findByType("Dialog" as any).props.onOpenChange(false); });
@@ -41,6 +42,6 @@ it("uses loaded dimensions and viewport measurements for tall screenshots", asyn
   await act(async () => { renderer.root.findByType("Image" as any).props.onLoad({ nativeEvent: { source: { width: 500, height: 4000 } } }); renderer.root.findByProps({ accessibilityLabel: "放大图片：截图" }).props.onPress(); });
   const preview = renderer.root.findByProps({ accessibilityLabel: "截图（放大预览）" });
   expect(preview.props.style.width / preview.props.style.height).toBe(0.125);
-  expect(preview.props.style.height).toBeLessThanOrEqual(900 * 0.65);
+  expect(preview.props.style.height).toBeLessThanOrEqual(900 * 0.92 - 150);
   await act(async () => { renderer.unmount(); });
 });

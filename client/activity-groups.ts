@@ -1,4 +1,5 @@
 /** Presentation-only grouping of mounted desktop/web rows. No session API. */
+import { clearPresentationState, getGroupExpanded, setGroupExpanded } from "./presentation-state";
 export interface ActivityMeta {
   scope: string;
   kind: "tool" | "reasoning" | "image";
@@ -37,7 +38,6 @@ export function activityLabel(counts: ActivityCounts): string {
 /** One observer per mounted row container, one pass per structural/status frame. */
 export class ActivityRows {
   private entries = new Map<HTMLElement, Entry>();
-  private choices = new Map<string, boolean>();
   private frame: number | null = null;
   private observer: MutationObserver;
   private disposed = false;
@@ -62,7 +62,7 @@ export class ActivityRows {
         const leader = entry.leader;
         if (!leader) return;
         const key = leader.getAttribute(ROW)!;
-        this.choices.set(key, !this.choices.get(key)); this.schedule();
+        setGroupExpanded(entry.meta.scope, key, !getGroupExpanded(entry.meta.scope, key)); this.schedule();
       },
       remove: () => {
         if (this.entries.get(row) !== entry) return;
@@ -85,15 +85,13 @@ export class ActivityRows {
   private rebuild() {
     let run: Entry[] = [];
     const visited = new Set<Entry>();
-    const activeKeys = new Set<string>();
     const flush = () => {
       const first = run[0];
       if (!first) return;
       if (run.length === 1) this.publish(first, SINGLE);
       else {
         const key = first.row.getAttribute(ROW)!;
-        activeKeys.add(key);
-        const expanded = this.choices.get(key) ?? false;
+        const expanded = getGroupExpanded(first.meta.scope, key);
         const counts = activityCounts(run.map(e => e.meta));
         run.forEach((entry, index) => this.publish(entry, { role: index ? "member" : "leader", expanded, ...(index ? {} : { counts }) }, first.row));
       }
@@ -109,20 +107,19 @@ export class ActivityRows {
         continue;
       }
       if (run.length && run[0]!.meta.scope !== entry.meta.scope) flush();
+      // Loading older history must not absorb an existing group into a new
+      // leader: that loses its expansion choice and shifts the reading row.
+      if (run.length && entry.state.role === "leader" && run[0]!.leader !== entry.row) flush();
       visited.add(entry); run.push(entry);
     }
     flush();
     for (const entry of this.entries.values()) if (!visited.has(entry)) this.publish(entry, SINGLE);
-    if (this.choices.size > 128) for (const key of this.choices.keys()) {
-      if (!activeKeys.has(key)) this.choices.delete(key);
-      if (this.choices.size <= 128) break;
-    }
   }
   dispose() {
     this.disposed = true; this.observer.disconnect();
     if (this.frame !== null) cancelAnimationFrame(this.frame);
     for (const entry of this.entries.values()) this.publish(entry, SINGLE);
-    this.entries.clear(); this.choices.clear();
+    this.entries.clear();
   }
 }
 
@@ -142,5 +139,5 @@ export function installActivityGroups(): () => void {
   style.id = "bc-activity-groups";
   style.textContent = '[data-testid="agent-chat-scroll"] [data-history-row-id][data-bc-activity-hidden="true"] { display: none !important; }';
   document.head.append(style);
-  return () => { for (const rows of hosts.values()) rows.dispose(); hosts.clear(); style.remove(); };
+  return () => { for (const rows of hosts.values()) rows.dispose(); hosts.clear(); clearPresentationState(); style.remove(); };
 }

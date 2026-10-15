@@ -1,3 +1,5 @@
+import {promptAttachmentsRpc} from "./shared/prompt-attachments";
+import {recoverPromptAttachments} from "./server/prompt-attachments";
 import { spawn } from "node:child_process";
 import { open, stat, type FileHandle } from "node:fs/promises";
 import { dirname, isAbsolute, resolve } from "node:path";
@@ -436,6 +438,7 @@ function tokenize(
 }
 
 export default function contribute(server: PluginServerContext) {
+  server.handle(promptAttachmentsRpc, input=>recoverPromptAttachments(input.agentId));
   server.handle(revealPathRpc, async (input) => {
     const requested = stripSelector(input.path);
     if (!requested) return { revealed: null, error: "No path" };

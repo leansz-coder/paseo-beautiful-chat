@@ -1,6 +1,6 @@
 {
   "name": "paseo-beautiful-chat-plus",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "A community fork of Beautiful Chat with compact activity groups, lazy image previews and rendering improvements.",
   "license": "MIT",
@@ -43,6 +43,7 @@
     "index.client.tsx",
     "index.server.ts",
     "client/",
-    "shared/"
+    "shared/",
+    "server/"
   ]
 }

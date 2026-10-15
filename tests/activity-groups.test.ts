@@ -59,3 +59,14 @@ it("restores hidden rows and cancels scheduled work on teardown", () => {
   expect(frames.size).toBe(0); expect(b.element.hasAttribute("data-bc-activity-hidden")).toBe(false);
   expect(a.state.role).toBe("single");
 });
+it("does not change an expanded group's leader when older tool rows are prepended",()=>{
+ const a=row('a'),b=row('b');flush();a.handle.toggle();flush();
+ const older=row('older');host.insertBefore(older.element,a.element);flush();
+ expect(a.state.role).toBe('leader');expect(a.state.expanded).toBe(true);expect(b.state.expanded).toBe(true);expect(older.state.role).toBe('single');
+});
+it("keeps group expansion when its mounted container is replaced",()=>{
+ const a=row('remount-a'),b=row('remount-b');flush();a.handle.toggle();flush();
+ rows.dispose();host.replaceChildren();rows=new ActivityRows(host);
+ const nextA=row('remount-a'),nextB=row('remount-b');flush();
+ expect(nextA.state.expanded).toBe(true);expect(nextB.state.expanded).toBe(true);
+});

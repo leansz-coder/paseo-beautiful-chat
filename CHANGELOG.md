@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0
+
+- Preserve native user attachments and recover missing upload metadata from supported Claude/Codex histories, with conservative duplicate-message matching.
+- Scan logs incrementally in bounded batches and share concurrent scans.
+- Preserve tool/reasoning/image expansion across virtual unmounts; stabilize image loading height and enlarge desktop previews.
+- Retain existing group identity when earlier ordinary rows arrive. Virtualized history grouping remains unsupported.
+- 59 regression tests and TypeScript checks pass. Native mobile attachment recovery is not supported.
+
 ## 0.2.0
 
 First public Git release of this community fork.

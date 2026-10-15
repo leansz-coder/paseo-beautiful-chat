@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import type { TextStyle, ViewStyle } from "react-native";
 import { Glyph } from "./glyph";
@@ -21,6 +21,7 @@ import type { ImageFile } from "../image-file";
 import { selectableSurface, unselectable } from "./selection";
 import { selectionCodeText, selectionSurface } from "./selection-actions";
 import type { ToolCalloutData } from "../../shared/contracts";
+import { usePresentationState } from "../presentation-state";
 
 function getToolIconName(tool: string): string {
   if (tool === "git") return "Git";
@@ -60,12 +61,11 @@ export function ToolCallout({
   imageFile,
 }: ToolCalloutProps) {
   const presentation = useMemo(() => toolPresentation(data), [data]);
-  const [choice, setChoice] = useState<{ id: string; value: boolean } | null>(null);
+  const [choice, setChoice] = usePresentationState<{ id: string; value: boolean; attention: boolean } | null>("tool-expanded", null);
   const attention = presentation.failed || presentation.awaitingAnswer;
   // A newly failed operation must become visible even if it was collapsed
   // while running. Subsequent manual expansion choices remain local to this row.
-  useEffect(() => { if (attention) setChoice(null); }, [attention, data.id]);
-  const expanded = (choice?.id === data.id ? choice.value : undefined) ?? (attention || defaultExpanded === true);
+  const expanded = (choice?.id === data.id && choice.attention === attention ? choice.value : undefined) ?? (attention || defaultExpanded === true);
 
   // Every branch below needs a payload. A tool that carries none — a hub op
   // with no parsed record, an unmapped kind — would otherwise draw an empty
@@ -450,7 +450,7 @@ export function ToolCallout({
       {...surfaceProps(frosted, glowing(tokens.isDark), selectionSurface)}
       style={styles.container}
     >
-      <Pressable accessibilityRole="button" accessibilityLabel={`${expanded ? "收起" : "展开"}工具详情：${data.title}`} accessibilityState={{ expanded }} onPress={() => setChoice({ id: data.id, value: !expanded })} style={styles.header}>
+      <Pressable accessibilityRole="button" accessibilityLabel={`${expanded ? "收起" : "展开"}工具详情：${data.title}`} accessibilityState={{ expanded }} onPress={() => setChoice({ id: data.id, value: !expanded, attention })} style={styles.header}>
         <View style={styles.headerLeft}>
           {data.filePath ? (
             isImagePath(data.filePath) ? <Glyph name="Image" size={14} color={iconColor} /> :

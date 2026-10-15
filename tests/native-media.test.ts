@@ -10,6 +10,7 @@ vi.mock("../client/components/shimmer", () => ({ installShimmer: () => () => {} 
 vi.mock("../client/components/glow", () => ({ installPointerGlow: () => () => {} }));
 vi.mock("../client/components/host-notice", () => ({ installHostNoticeStyle: () => () => {} }));
 vi.mock("../client/components/chat-find", () => ({ installChatFind: () => () => {} }));
+vi.mock("../client/web", () => ({ installNativePromptStyle: () => () => {} }));
 import contribute from "../index.client";
 import { getEnhancerPreferences, updateEnhancerPreferences } from "../client/preferences";
 import type { PluginClientContext } from "@getpaseo/plugin/client";
@@ -78,4 +79,18 @@ it("preserves styled tool payloads with grouping enabled or disabled", () => {
 it("claims only complete supported image-only messages and preserves encoded paths", () => {
   expect(imageOnlyResults("![Image](file:///tmp/a%20b.png)\n\n![screen](https://example.com/b.png)")).toEqual([{ uri: "file:///tmp/a%20b.png", label: "截图", path: "/tmp/a b.png" }, { uri: "https://example.com/b.png", label: "screen" }]);
   for (const text of ["text ![Image](file:///tmp/a.png)", "![Image](file:///tmp/a.png) after", "![Image](file:///tmp/a.png", "![Image](file:///tmp/a.svg)", "![x][ref]", "![x](data:image/png;base64,AAAA)"]) expect(imageOnlyResults(text)).toBeNull();
+});
+
+
+it("preserves every user source because host projection omits attachment metadata",()=>{
+ const transforms=new Map<string,(input:any)=>any>();
+ const cleanup=contribute({addSettingsScreen:()=>()=>{},addTimelineRenderer:()=>()=>{},addTimelineTransformer:(value:any)=>{transforms.set(value.query.itemType,value.transform);return()=>{};}} as unknown as PluginClientContext);
+ const transform=transforms.get("user_message")!;
+ for(const item of [
+  {type:"user_message",text:"这个是目前的数据样例",messageId:"csv"},
+  {type:"user_message",text:"看这个图片",messageId:"screenshot"},
+  {type:"user_message",text:"",messageId:"attachment-only"},
+  {type:"user_message",text:"image and file",images:["file:///tmp/a.png"],attachments:[{type:"file",fileName:"sample.csv"}]},
+ ]) expect(transform({item,phase:"complete"})).toBeUndefined();
+ cleanup();
 });

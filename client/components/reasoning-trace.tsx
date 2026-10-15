@@ -10,6 +10,7 @@ import { selectionSurface } from "./selection-actions";
 import type { ExtendedThemeTokens } from "./theme-tokens";
 import type { ReasoningTraceData, ReasoningStep } from "../../shared/contracts";
 import { SyntaxHighlightBlock } from "./syntax-highlight";
+import { usePresentationState } from "../presentation-state";
 
 interface ReasoningTraceProps {
   data: ReasoningTraceData;
@@ -18,7 +19,7 @@ interface ReasoningTraceProps {
 }
 
 export function ReasoningTrace({ data, tokens, defaultExpanded = false }: ReasoningTraceProps) {
-  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+  const [isExpanded, setIsExpanded] = usePresentationState("reasoning-expanded", defaultExpanded);
   const [activeStepId, setActiveStepId] = useState<string | null>(null);
 
   const durationFormatted = (data.durationMs / 1000).toFixed(1);

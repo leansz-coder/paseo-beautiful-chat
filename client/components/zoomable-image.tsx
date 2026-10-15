@@ -22,11 +22,11 @@ function ImageViewer({ uri, label, style, tokens, width, height }: Props) {
   const window = useWindowDimensions();
   const [open, setOpen] = useState(false);
   const [zoom, setZoom] = useState(1);
-  const [viewport, setViewport] = useState(Math.min(560, Math.max(1, window.width - 48)));
+  const [viewport, setViewport] = useState(Math.max(1, window.width * 0.94 - 48));
   const [size, setSize] = useState({ width: width ?? 0, height: height ?? 0 });
   const [failed, setFailed] = useState(false);
   const valid = size.width > 0 && size.height > 0;
-  const fit = valid ? Math.min(viewport / size.width, Math.max(120, window.height * 0.65) / size.height) : 1;
+  const fit = valid ? Math.min(viewport / size.width, Math.max(120, window.height * 0.92 - 150) / size.height) : 1;
   const imageWidth = valid ? size.width * fit * zoom : viewport * zoom;
   const imageHeight = valid ? size.height * fit * zoom : 300 * zoom;
   const button = { padding: 10, borderRadius: 8, backgroundColor: tokens.surface2 };
@@ -43,7 +43,7 @@ function ImageViewer({ uri, label, style, tokens, width, height }: Props) {
     </Pressable>
     {open && <Modal title={label} open={open} onOpenChange={close}>
       <Modal.Content contentContainerStyle={{ padding: 12, gap: 12 }} style={{ backgroundColor: tokens.surface0 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        <View {...({dataSet:{bcImageViewer:"true"}} as import("react-native").ViewProps)} style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <Pressable accessibilityRole="button" accessibilityLabel="缩小图片" disabled={zoom <= 1} onPress={() => setZoom(z => Math.max(1, z / 2))} style={button}><Text style={{ color: tokens.foreground }}>缩小</Text></Pressable>
           <Pressable accessibilityRole="button" accessibilityLabel="放大图片" disabled={zoom >= 8} onPress={() => setZoom(z => Math.min(8, z * 2))} style={button}><Text style={{ color: tokens.foreground }}>放大</Text></Pressable>
           <Pressable accessibilityRole="button" accessibilityLabel="图片适应窗口" onPress={() => setZoom(1)} style={button}><Text style={{ color: tokens.foreground }}>适应窗口</Text></Pressable>

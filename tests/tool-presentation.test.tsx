@@ -14,6 +14,7 @@ vi.mock("../client/components/syntax-highlight", () => ({ SyntaxHighlightBlock: 
 vi.mock("../client/image-file", () => ({ isImagePath: () => false }));
 vi.mock("../client/components/selection-actions", () => ({ selectionSurface: {}, selectionCodeText: {} }));
 import { ToolCallout } from "../client/components/tool-callouts";
+import { PresentationScope } from "../client/presentation-state";
 import { toolPresentation, formatToolDuration } from "../client/tool-presentation";
 import { buildThemeTokens, type PluginSurfaceColors } from "../client/components/theme-tokens";
 import type { ToolCalloutData } from "../shared/contracts";
@@ -60,4 +61,21 @@ it("keeps the failure reason visible even for typed tools without a text-output 
   expect(header(r).props.accessibilityState.expanded).toBe(true);
   expect(JSON.stringify(r.toJSON())).toContain("File not found: missing.txt");
   await act(async () => { r.unmount(); });
+});
+it("restores tool choices after virtual unmount, isolates sessions and reveals a new failure",async()=>{
+ let r!:ReactTestRenderer;
+ const render=(scope:string,status:ToolCalloutData['status']='completed')=><PresentationScope value={scope}><ToolCallout data={{...data,status}} tokens={tokens}/></PresentationScope>;
+ await act(async()=>{r=create(render('host/agent-a/row'));});
+ await act(async()=>{header(r).props.onPress();r.unmount();});
+ await act(async()=>{r=create(render('host/agent-a/row'));});
+ expect(header(r).props.accessibilityState.expanded).toBe(true);
+ await act(async()=>{r.update(render('host/agent-b/row'));});
+ expect(header(r).props.accessibilityState.expanded).toBe(false);
+ await act(async()=>{r.update(render('host/agent-a/row'));header(r).props.onPress();});
+ await act(async()=>{r.update(render('host/agent-a/row','failed'));});
+ expect(header(r).props.accessibilityState.expanded).toBe(true);
+ await act(async()=>{header(r).props.onPress();r.unmount();});
+ await act(async()=>{r=create(render('host/agent-a/row','failed'));});
+ expect(header(r).props.accessibilityState.expanded).toBe(false);
+ await act(async()=>{r.unmount();});
 });

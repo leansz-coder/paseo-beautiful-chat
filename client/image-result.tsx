@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { View, Text, Pressable } from "react-native";
 import type { PluginTimelineItemProps } from "@getpaseo/plugin/client";
 import { ActivityRow } from "./grouped-renderers";
@@ -10,13 +10,14 @@ import { useImageFile } from "./image-file";
 import { ImagePreview } from "./components/image-preview";
 import { ZoomableImage } from "./components/zoomable-image";
 import { Glyph } from "./components/glyph";
+import { usePresentationState } from "./presentation-state";
 
 function LocalImage({ image, tokens }: { image: ImageResult; tokens: ExtendedThemeTokens }) {
   const file = useImageFile(image.path, null);
   return <ImagePreview path={image.path!} file={file} tokens={tokens} />;
 }
 export function ImageResultCard({ images, tokens }: { images: ImageResult[]; tokens: ExtendedThemeTokens }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = usePresentationState("image-result-expanded", false);
   return <View style={{ gap: 8 }}>
     <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} accessibilityLabel={`${open ? "收起" : "查看"}截图 ${images.length} 张`} onPress={() => setOpen(v => !v)}
       style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 10, backgroundColor: tokens.accentBg, alignSelf: "flex-start" }}>

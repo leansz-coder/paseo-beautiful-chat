@@ -7,6 +7,8 @@ import { buildThemeTokens, withAlpha } from "./components/theme-tokens";
 import { Glyph } from "./components/glyph";
 import { LiveToolCallRenderer, LiveReasoningRenderer, type LiveToolCallPayload, type LiveReasoningPayload } from "./live-renderers";
 import { isInteractiveTool, toolActivityState } from "./tool-grouping";
+import { PresentationScope } from "./presentation-state";
+import { presentationScopeForRow } from "./web";
 
 export function ActivityRow({ meta, children, ...props }: PluginTimelineItemProps<unknown> & { meta: ActivityMeta; children: React.ReactNode }) {
   const preferences = useEnhancerPreferences();
@@ -15,6 +17,10 @@ export function ActivityRow({ meta, children, ...props }: PluginTimelineItemProp
   const element = useRef<View>(null);
   const registration = useRef<ReturnType<typeof registerActivity>>(null);
   const [state, setState] = useState<ActivityState>(SINGLE);
+  const [presentationScope, setPresentationScope] = useState<string | null>(null);
+  useLayoutEffect(() => {
+    setPresentationScope(presentationScopeForRow(element.current, props.host.id, props.agentId));
+  }, [props.host.id, props.agentId]);
   useLayoutEffect(() => {
     const node = element.current;
     if (!enabled || !(node instanceof HTMLElement)) { setState(SINGLE); return; }
@@ -38,7 +44,7 @@ export function ActivityRow({ meta, children, ...props }: PluginTimelineItemProp
       {counts.canceled > 0 && <Text style={{ color: tokens.warning, fontSize: 11 }}>{counts.canceled} 已取消</Text>}
       <Glyph name={expanded ? "ChevronUp" : "ChevronDown"} size={14} color={tokens.foregroundMuted} />
     </Pressable>}
-    {expanded && <View style={visibleState.role === "leader" ? { marginTop: 10 } : undefined}>{children}</View>}
+    {expanded && <PresentationScope value={presentationScope}><View style={visibleState.role === "leader" ? { marginTop: 10 } : undefined}>{children}</View></PresentationScope>}
   </View>;
 }
 
